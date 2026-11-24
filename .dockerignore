@@ -1,0 +1,10 @@
+# Keep the image small: only source, data and package metadata are needed.
+.git
+.github
+**/__pycache__
+*.egg-info
+build
+dist
+notebooks
+plots
+outputs

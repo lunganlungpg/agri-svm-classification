@@ -1,0 +1,22 @@
+Package: agrisvm
+Title: Support Vector Machine Classification of Crop Health and Stress
+Version: 1.0.0
+Authors@R: person("Lunganlung", "P. G.", role = c("aut", "cre"),
+    email = "lunganlungpg@gmail.com")
+Description: Classifies crop condition (healthy, nutrient deficiency or fungal
+    blight) from spectral and phenomic indicators
+    (NDVI, NDRE, canopy temperature, SPAD chlorophyll, leaf moisture) with
+    radial-kernel support vector machines, and reports confusion matrices and
+    held-out accuracy. Ships helpers to load the sample phenomics dataset used
+    in the accompanying Python pipeline.
+License: MIT + file LICENSE
+URL: https://github.com/lunganlungpg/agri-svm-classification
+BugReports: https://github.com/lunganlungpg/agri-svm-classification/issues
+Encoding: UTF-8
+Depends: R (>= 4.0.0)
+Imports:
+    e1071,
+    stats,
+    utils
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0

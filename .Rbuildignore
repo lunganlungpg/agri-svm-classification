@@ -1,0 +1,16 @@
+# Files in the repository that are not part of the R package build.
+^python$
+^notebooks$
+^plots$
+^data$
+^outputs$
+^requirements\.txt$
+^pyproject\.toml$
+^Dockerfile$
+^\.dockerignore$
+^\.github$
+^README\.md$
+^LICENSE\.md$
+^.*\.egg-info$
+^build$
+^dist$

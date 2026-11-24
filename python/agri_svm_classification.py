@@ -5,7 +5,8 @@ Support Vector Machine (SVM) pipeline for agricultural crop health and
 stress classification using spectral and phenomic indicators.
 """
 
-import os
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
@@ -13,14 +14,34 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
+try:  # imported as part of the installed ``agrisvm`` package
+    from .agri_svm_data import resolve_data_path
+except ImportError:  # run directly as ``python python/agri_svm_classification.py``
+    from agri_svm_data import resolve_data_path
 
-def run_svm_pipeline():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(base_dir, "..", "data", "crop_disease_phenomics.csv")
+#: Spectral / phenomic predictors and the class label column.
+FEATURE_COLS = ["ndvi", "ndre", "canopy_temp_c", "chlorophyll_spad", "leaf_moisture_pct"]
+TARGET_COL = "condition"
 
-    df = pd.read_csv(data_path)
-    feature_cols = ["ndvi", "ndre", "canopy_temp_c", "chlorophyll_spad", "leaf_moisture_pct"]
-    target_col = "condition"
+
+def run_svm_pipeline(data_path: str | None = None) -> dict:
+    """Compare SVM kernels with 5-fold CV, then evaluate the RBF SVM on a test split.
+
+    Parameters
+    ----------
+    data_path:
+        CSV with the :data:`FEATURE_COLS` and :data:`TARGET_COL` columns.
+        Defaults to the bundled sample dataset.
+
+    Returns
+    -------
+    dict
+        ``{"model": fitted SVC, "scaler": StandardScaler, "test_accuracy": float,
+        "cv_scores": {kernel_name: {...}}}`` so results can be reused in code.
+    """
+    df = pd.read_csv(resolve_data_path(data_path))
+    feature_cols = FEATURE_COLS
+    target_col = TARGET_COL
 
     X = df[feature_cols].values
     y = df[target_col].values
@@ -47,12 +68,17 @@ def run_svm_pipeline():
     print("=" * 70)
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv_scores = {}
 
     for name, model in kernels.items():
         scores = cross_validate(
             model, X_train_scaled, y_train, cv=cv,
             scoring=["accuracy", "f1_macro"]
         )
+        cv_scores[name] = {
+            "accuracy": scores["test_accuracy"].mean(),
+            "f1_macro": scores["test_f1_macro"].mean(),
+        }
         print(f"\nModel: {name}")
         print(f"  - 5-Fold Mean Accuracy: {scores['test_accuracy'].mean():.4f} (±{scores['test_accuracy'].std():.4f})")
         print(f"  - 5-Fold Macro F1:     {scores['test_f1_macro'].mean():.4f} (±{scores['test_f1_macro'].std():.4f})")
@@ -74,6 +100,13 @@ def run_svm_pipeline():
     print(f"  - Support Vector Ratio:  {len(best_svm.support_) / len(X_train) * 100:.2f}%")
     for cls_name, count in zip(best_svm.classes_, best_svm.n_support_):
         print(f"    * Class '{cls_name}': {count} support vectors")
+
+    return {
+        "model": best_svm,
+        "scaler": scaler,
+        "test_accuracy": accuracy_score(y_test, test_preds),
+        "cv_scores": cv_scores,
+    }
 
 
 if __name__ == "__main__":

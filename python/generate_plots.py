@@ -14,14 +14,23 @@ from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 
+# Works both inside the installed ``agrisvm`` package and as a plain script
+# run from the repository (``python python/<script>.py``).
+try:
+    from .agri_svm_data import resolve_data_path, resolve_output_dir
+except ImportError:  # no parent package -> running as a standalone script
+    from agri_svm_data import resolve_data_path, resolve_output_dir
 
-def generate_all_plots():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(base_dir, "..", "data", "crop_disease_phenomics.csv")
-    plots_dir = os.path.join(base_dir, "..", "plots")
-    os.makedirs(plots_dir, exist_ok=True)
 
-    df = pd.read_csv(data_path)
+def generate_all_plots(data_path=None, output_dir=None):
+    """Write the four 300 DPI PNG figures and return the output folder.
+
+    ``data_path`` defaults to the sample dataset; ``output_dir`` defaults to the
+    repo's ``plots/`` folder (or ``./plots`` when installed with pip).
+    """
+    plots_dir = resolve_output_dir(output_dir)
+
+    df = pd.read_csv(resolve_data_path(data_path))
     feature_cols = ["ndvi", "ndre", "canopy_temp_c", "chlorophyll_spad", "leaf_moisture_pct"]
     target_col = "condition"
 
@@ -194,6 +203,7 @@ def generate_all_plots():
     plt.close()
 
     print(f"All 4 static publication plots successfully saved in: {plots_dir}")
+    return plots_dir
 
 
 if __name__ == "__main__":

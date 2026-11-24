@@ -15,14 +15,23 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 
+# Works both inside the installed ``agrisvm`` package and as a plain script
+# run from the repository (``python python/<script>.py``).
+try:
+    from .agri_svm_data import resolve_data_path, resolve_output_dir
+except ImportError:  # no parent package -> running as a standalone script
+    from agri_svm_data import resolve_data_path, resolve_output_dir
 
-def build_interactive_visuals():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(base_dir, "..", "data", "crop_disease_phenomics.csv")
-    plots_dir = os.path.join(base_dir, "..", "plots")
-    os.makedirs(plots_dir, exist_ok=True)
 
-    df = pd.read_csv(data_path)
+def build_interactive_visuals(data_path=None, output_dir=None):
+    """Write the Plotly dashboard and 3D scatter HTML files; return their paths.
+
+    ``data_path`` defaults to the sample dataset; ``output_dir`` defaults to the
+    repo's ``plots/`` folder (or ``./plots`` when installed with pip).
+    """
+    plots_dir = resolve_output_dir(output_dir)
+
+    df = pd.read_csv(resolve_data_path(data_path))
     feature_cols = ["ndvi", "ndre", "canopy_temp_c", "chlorophyll_spad", "leaf_moisture_pct"]
     target_col = "condition"
 
@@ -191,6 +200,7 @@ def build_interactive_visuals():
     fig_3d.write_html(scatter_3d_path, include_plotlyjs="cdn")
 
     print(f"Interactive SVM plots successfully built:\n  - {dashboard_path}\n  - {scatter_3d_path}")
+    return dashboard_path, scatter_3d_path
 
 
 if __name__ == "__main__":
